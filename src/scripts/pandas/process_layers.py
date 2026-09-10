@@ -45,7 +45,6 @@ def l0_to_l1(schema, table, bucket, process_date):
 
     context = {
         "df": None,
-        "layer": "l0_to_l1",
         "config": config,
     }
 
