@@ -1,0 +1,31 @@
+schema_name: retail
+table_name: products
+
+l1_layer: l1
+l1_format: parquet
+
+columns:
+  - name: product_id
+    type: string
+    db_type: VARCHAR(50)
+    primary_key: true
+
+  - name: product_name
+    type: string
+    db_type: VARCHAR(255)
+
+  - name: unit_price
+    type: decimal
+    db_type: NUMERIC(15,2)
+
+  - name: process_date
+    type: timestamp
+    db_type: TIMESTAMP
+
+  - name: source_file
+    type: string
+    db_type: VARCHAR(255)
+
+load_database:
+  load_strategy: upsert
+  primary_key: product_id

@@ -1,0 +1,27 @@
+schema_name: retail
+table_name: province
+
+l1_layer: l1
+l1_format: parquet
+
+columns:
+  - name: province_id
+    type: string
+    db_type: VARCHAR(50)
+    primary_key: true
+
+  - name: province_name
+    type: string
+    db_type: VARCHAR(255)
+
+  - name: process_date
+    type: timestamp
+    db_type: TIMESTAMP
+
+  - name: source_file
+    type: string
+    db_type: VARCHAR(255)
+
+load_database:
+  load_strategy: upsert
+  primary_key: province_id
