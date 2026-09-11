@@ -14,12 +14,16 @@ columns:
     type: string
   - name: name
     type: string
+  - name: source_file
+    type: string
+  - name: process_date
+    type: datetime
 
 validation:
   - rule: not_null
-    column: [id, name]
-  - rule: unique
-    column: id
+    column: [id, name, source_file, process_date]
+  - rule: duplicate
+    primary_key: id
 
 transformation:
   rename:

@@ -22,10 +22,14 @@ columns:
     type: decimal
   - name: order_date
     type: datetime
+  - name: source_file
+    type: string
+  - name: process_date
+    type: datetime
 
 validation:
   - rule: not_null
-    column: [id, customer_id, product_id, quantity, price, order_date]
+    column: [id, customer_id, product_id, quantity, price, order_date, source_file, process_date]
   - rule: range
     column: quantity
     min: 0
@@ -34,8 +38,8 @@ validation:
     column: price
     min: 0
     max: 9999999
-  - rule: unique
-    column: id
+  - rule: duplicate
+    primary_key: id
   - rule: unique
     column: [customer_id, product_id]
 

@@ -21,16 +21,22 @@ columns:
     type: string
   - name: kpi
     type: decimal
+  - name: source_file
+    type: string
+  - name: process_date
+    type: datetime
 
 validation:
   - rule: not_null
-    column: [id, name, birthday, address, kpi]
+    column: [id, name, birthday, address, kpi, source_file, process_date]
   - rule: range
     column: kpi
     min: 0
     max: 100
+  - rule: duplicate
+    primary_key: id
   - rule: unique
-    column: id
+    column: address
 
 transformation:
   split_name:

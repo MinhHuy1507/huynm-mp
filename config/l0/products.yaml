@@ -16,16 +16,20 @@ columns:
     type: string
   - name: unit_price
     type: decimal
+  - name: source_file
+    type: string
+  - name: process_date
+    type: datetime
 
 validation:
   - rule: not_null
-    column: [id, name, unit_price]
+    column: [id, name, unit_price, source_file, process_date]
   - rule: range
     column: unit_price
     min: 0
-    max: 9999999
-  - rule: unique
-    column: id
+    max: 9999
+  - rule: duplicate
+    primary_key: id
 
 transformation:
   rename:
