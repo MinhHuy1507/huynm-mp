@@ -171,7 +171,7 @@ def job_failure_callback(context):
         region_name=region_name,
     )
 
-
+# Callback funtion for Glue job
 # Callback function to update DynamoDB when the task succeeds
 def job_success_callback(context):
     ti = context["task_instance"]

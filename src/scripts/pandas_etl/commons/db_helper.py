@@ -1,6 +1,9 @@
-from ec2_airflow.scripts.pandas.commons.utils import read_file
+from scripts.pandas_etl.commons.utils import read_file
 from sqlalchemy import create_engine, text
 from scripts.utils.configs import pg_conn
+from scripts.utils import logger
+
+logging = logger.get_logger(__name__)
 
 
 def get_engine():
@@ -29,6 +32,8 @@ def create_table(config):
     table = config["table_name"]
     column_defs = []
 
+    logging.info(f"Creating table {schema}.{table}")
+
     for col in config["columns"]:
         parts = [col["name"], col["db_type"]]
         for key, value in col.items():
@@ -45,14 +50,17 @@ def create_table(config):
         {columns_sql}
     );
     """
+
+    logging.info(f"Executing SQL:\n{sql}")
     engine = get_engine()
     with engine.begin() as conn:
-        conn.execute(text(engine))
+        conn.execute(text(sql))
 
 
 def append_only(bucket, key, config):
     schema_name = config["schema_name"]
     table_name = config["table_name"]
+    logging.info(f"Appending data to {schema_name}.{table_name} from {bucket}/{key}")
 
     df = read_file(bucket, key, config["l1_format"])
     engine = get_engine()
@@ -71,11 +79,12 @@ def append_only(bucket, key, config):
 def truncate_and_insert(bucket, key, config):
     schema_name = config["schema_name"]
     table_name = config["table_name"]
+    logging.info(f"Truncating and inserting data to {schema_name}.{table_name} from {bucket}/{key}")
 
     df = read_file(bucket, key, config["l1_format"])
     engine = get_engine()
     with engine.begin() as conn:
-        conn.execute(f"TRUNCATE TABLE {schema_name}.{table_name}")
+        conn.execute(text(f"TRUNCATE TABLE {schema_name}.{table_name}"))
         df.to_sql(
             name=table_name,
             schema=schema_name,
@@ -90,6 +99,7 @@ def truncate_and_insert(bucket, key, config):
 def upsert(bucket, key, config):
     schema_name = config["schema_name"]
     table_name = config["table_name"]
+    logging.info(f"Upserting data to {schema_name}.{table_name} from {bucket}/{key}")
 
     df = read_file(bucket, key, config["l1_format"])
 

@@ -1,7 +1,7 @@
 import pandas as pd
 from itertools import islice
 from scripts.utils import logger, s3_helper
-from scripts.pandas.commons.utils import read_file
+from scripts.pandas_etl.commons.utils import read_file
 
 logging = logger.get_logger(__name__)
 
@@ -100,6 +100,14 @@ def validate_unique(df, column):
     return mask
 
 
+def validate_duplicate(df, column=None, primary_key=None):
+    subset = primary_key if primary_key is not None else column
+    if isinstance(subset, list) and not subset:
+        subset = None
+
+    return ~df.duplicated(subset=subset, keep="first")
+
+
 def validate_format(df, column, format):
     python_format = format.replace("yyyy", "%Y").replace("MM", "%m").replace("dd", "%d")
     parsed = pd.to_datetime(df[column], format=python_format, errors="coerce")
@@ -129,7 +137,7 @@ def validate_datatype(df, column, col_type):
 
 # Add new row error, for audit (error_records)
 def _add_row_error(error_rows, df, idx, rule, params):
-    column = params.get("column", "")
+    column = params.get("column", params.get("primary_key", ""))
     if isinstance(column, list):
         error_columns = column
     elif column:
@@ -217,6 +225,7 @@ VALIDATE_FUNCTIONS = {
     "validate_schema": validate_schema,
     "not_null": validate_not_null,
     "unique": validate_unique,
+    "duplicate": validate_duplicate,
     "format": validate_format,
     "range": validate_range,
 }

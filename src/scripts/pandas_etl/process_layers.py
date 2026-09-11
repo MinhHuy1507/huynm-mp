@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
 
-from scripts.pandas.commons import utils, transformations, validations
+from scripts.pandas_etl.commons import utils, transformations, validations
 from scripts.utils import logger, s3_helper
 
 logging = logger.get_logger(__name__)

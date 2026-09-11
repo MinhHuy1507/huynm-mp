@@ -1,5 +1,5 @@
 from scripts.utils import logger, s3_helper
-from scripts.pandas.commons.db_helper import LOAD_STRATEGIES, create_table
+from scripts.pandas_etl.commons.db_helper import LOAD_STRATEGIES, create_table
 
 logging = logger.get_logger(__name__)
 

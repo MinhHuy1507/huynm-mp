@@ -1,8 +1,8 @@
 from datetime import datetime
-
-import pandas as pd
 import numpy as np
+from scripts.utils import logger
 
+logging = logger.get_logger(__name__)
 
 def transform(context):
     df = context["df"]
@@ -24,10 +24,12 @@ def add_columns(context, transform_rules):
     df = context["df"]
     path = context["source_file"]
 
+    logging.info(f"Adding columns to DataFrame: {transform_rules}")
     columns = {"process_date": datetime.now(), "source_file": path}
     for column in transform_rules:
         column_name = column["name"]
         if column_name not in columns:
+            logging.error(f"Unknown column name: {column_name}")
             raise ValueError(f"Unknown column name: {column_name}")
         df[column_name] = columns[column_name]
 
@@ -38,6 +40,7 @@ def add_columns(context, transform_rules):
 ## customers
 def split_customers_address(context, transform_rules):
     df = context["df"]
+    logging.info(f"Splitting address column")
 
     for rule in transform_rules:
         source = rule["from"]
@@ -55,6 +58,7 @@ def split_customers_address(context, transform_rules):
 
 def split_customers_name(context, transform_rules):
     df = context["df"]
+    logging.info(f"Splitting name column")
 
     for rule in transform_rules:
         source = rule["from"]
@@ -70,9 +74,14 @@ def split_customers_name(context, transform_rules):
 
 def rename_columns(context, transform_rules):
     df = context["df"]
+    columns = df.columns.tolist()
 
+    logging.info(f"Renaming columns")
     mapping = {}
     for rule in transform_rules:
+        if rule["from"] not in columns:
+            logging.error(f"Columns not found: {columns}")
+            raise ValueError(f"Columns not found: {columns}")
         mapping[rule["from"]] = rule["to"]
 
     df = df.rename(columns=mapping)
@@ -81,9 +90,11 @@ def rename_columns(context, transform_rules):
 
 def filter_columns(context, transform_rules):
     df = context["df"]
+    logging.info(f"Filtering columns")
 
     for rule in transform_rules:
         output_columns = rule["output"]
+
         df = df[output_columns]
 
     return df
