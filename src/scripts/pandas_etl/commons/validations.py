@@ -17,12 +17,12 @@ def validate_file(context):
     key_source = context["key_source"]
     key_quarantine = context["key_quarantine"]
     config = context["config"]
-
-    logging.info(f"Validating file: s3://{bucket}/{key_source}")
+    file_path = f"s3://{bucket}/{key_source}"
+    logging.info(f"Validating file: {file_path}")
 
     # File exists
     if not s3_helper.check_file_exists(bucket, key_source):
-        msg = f"File not found - s3://{bucket}/{key_source}"
+        msg = f"File not found - {file_path}"
         logging.error(msg)
         raise ValidationError(msg)
 
@@ -33,27 +33,32 @@ def validate_file(context):
 
         first_line = next(iterator, None)
         if not first_line:
-            raise ValidationError(f"File empty - {key_source}")
+            raise ValidationError(f"File empty - {file_path}")
 
         header_line = first_line.decode("utf-8").strip()
         if not header_line:
-            raise ValidationError(f"File has blank header: {key_source}")
+            raise ValidationError(f"File empty - {file_path}")
 
         first_data_line = next(
             (l.decode("utf-8").strip() for l in islice(iterator, 10) if l.strip()), None
         )
         if not first_data_line:
             raise ValidationError(
-                f"File contains only header, no data records: {key_source}"
+                f"File contains only header without data - {file_path}"
             )
 
         context["header_line"] = header_line
         context["df"] = read_file(bucket, key_source, config["l0_format"])
 
+    except ValidationError as ve:
+        s3_helper.copy_file(bucket, key_source, bucket, key_quarantine)
+        logging.error(str(ve))
+        raise ve
+
     except Exception as e:
         s3_helper.copy_file(bucket, key_source, bucket, key_quarantine)
-        error_msg = f"File is not readable - {key_source}. Error: {str(e)}"
-        logging.error(error_msg)
+        error_msg = f"File is not readable - {file_path}"
+        logging.error(f"{error_msg} | Internal Error: {str(e)}")
         raise ValidationError(error_msg)
 
 
@@ -167,6 +172,10 @@ def _add_row_error(error_rows, df, idx, rule, params):
 def validate_l0_to_l1(df, config):
     error_rows = {}
 
+    duplicate_mask = validate_duplicate(df)
+    for idx in df.index[~duplicate_mask]:
+        _add_row_error(error_rows, df, idx, "duplicate", {})
+
     # Validate datatype
     for col in config["columns"]:
         col_name = col["name"]
@@ -186,7 +195,10 @@ def validate_l0_to_l1(df, config):
         params = {k: v for k, v in validation.items() if k != "rule"}
         columns = params.get("column", [])
 
-        if isinstance(columns, list) and rule != "unique":
+        if rule == "duplicate" and params.get("primary_key") is None:
+            continue
+
+        if isinstance(columns, list) and rule not in ["unique", "duplicate"]:
             for col in columns:
                 single_col_params = params.copy()
                 single_col_params["column"] = col

@@ -35,8 +35,6 @@ validation:
     max: 100
   - rule: duplicate
     primary_key: id
-  - rule: unique
-    column: address
 
 transformation:
   split_name:

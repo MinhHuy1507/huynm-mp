@@ -91,8 +91,9 @@ def sns_publish(
         logging.error(f"Failed to send SNS message: {e}", exc_info=True)
 
 
+# Callback funtion for Glue job
 # Callback function to update DynamoDB when the task fails
-def job_failure_callback(context):
+def glue_job_failure_callback(context):
     ti = context.get("task_instance")
     run_id = context.get("run_id")
     task_id = ti.task_id
@@ -171,9 +172,9 @@ def job_failure_callback(context):
         region_name=region_name,
     )
 
-# Callback funtion for Glue job
+
 # Callback function to update DynamoDB when the task succeeds
-def job_success_callback(context):
+def glue_job_success_callback(context):
     ti = context["task_instance"]
     task_id = ti.task_id
     run_id = context.get("run_id")

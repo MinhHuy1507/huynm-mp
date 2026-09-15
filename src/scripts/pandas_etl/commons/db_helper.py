@@ -2,6 +2,7 @@ from scripts.pandas_etl.commons.utils import read_file
 from sqlalchemy import create_engine, text
 from scripts.utils.configs import pg_conn
 from scripts.utils import logger
+from datetime import datetime
 
 logging = logger.get_logger(__name__)
 
@@ -79,7 +80,9 @@ def append_only(bucket, key, config):
 def truncate_and_insert(bucket, key, config):
     schema_name = config["schema_name"]
     table_name = config["table_name"]
-    logging.info(f"Truncating and inserting data to {schema_name}.{table_name} from {bucket}/{key}")
+    logging.info(
+        f"Truncating and inserting data to {schema_name}.{table_name} from {bucket}/{key}"
+    )
 
     df = read_file(bucket, key, config["l1_format"])
     engine = get_engine()
@@ -103,39 +106,48 @@ def upsert(bucket, key, config):
 
     df = read_file(bucket, key, config["l1_format"])
 
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    stg_table = f"{table_name}_stg_{timestamp}"
+
     columns = df.columns.to_list()
-    columns_text = ", ".join(columns)
+    columns_text = ", ".join(f'"{col}"' for col in columns)
     primary_key = config["load_database"]["primary_key"]
     update_cols = ", ".join(
-        f"{col} = EXCLUDED.{col}" for col in columns if col != primary_key
+        f'"{col}" = EXCLUDED."{col}"' for col in columns if col != primary_key
     )
+
     insert_into_main_table = f"""
         INSERT INTO {schema_name}.{table_name} ({columns_text})
         SELECT {columns_text}
-        FROM {schema_name}.{table_name}_stg
-        ON CONFLICT ({primary_key})
+        FROM {schema_name}.{stg_table}
+        ON CONFLICT ("{primary_key}")
         DO UPDATE
         SET {update_cols};
     """
 
-    create_temp_table = f"""
-        DROP TABLE IF EXISTS {schema_name}.{table_name}_stg;
-        CREATE TABLE {schema_name}.{table_name}_stg (LIKE {schema_name}.{table_name});
-    """
-
     engine = get_engine()
     with engine.begin() as conn:
-        conn.execute(text(create_temp_table))
-        df.to_sql(
-            name=f"{table_name}_stg",
-            schema=schema_name,
-            con=conn,
-            if_exists="append",
-            index=False,
-            method="multi",
-            chunksize=10000,
-        )
-        conn.execute(text(insert_into_main_table))
+        conn.execute(text(f"""
+            DROP TABLE IF EXISTS {schema_name}.{stg_table};
+            CREATE TABLE {schema_name}.{stg_table} (LIKE {schema_name}.{table_name});
+        """))
+
+    try:
+        with engine.begin() as conn:
+            df.to_sql(
+                name=stg_table,
+                schema=schema_name,
+                con=conn,
+                if_exists="append",
+                index=False,
+                method="multi",
+                chunksize=10000,
+            )
+            conn.execute(text(insert_into_main_table))
+
+    finally:
+        with engine.begin() as conn:
+            conn.execute(text(f"DROP TABLE IF EXISTS {schema_name}.{stg_table};"))
 
 
 LOAD_STRATEGIES = {

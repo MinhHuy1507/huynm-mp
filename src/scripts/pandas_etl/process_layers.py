@@ -10,8 +10,9 @@ logging = logger.get_logger(__name__)
 def rcv_to_l0(schema, table, bucket, process_date):
     logging.info(f"Start processing table {table} from rcv/ to l0/")
     config = s3_helper.load_config(bucket=bucket, layer="rcv", table=table)
+    target_config = s3_helper.load_config(bucket=bucket, layer="l0", table=table)
     key_rcv = f"{config.get('rcv_layer')}/{schema}/{table}/{process_date}/{table}.{config.get('rcv_format')}"
-    key_l0 = f"{config.get('l0_layer')}/{schema}/{table}/{process_date}/{table}.{config.get('l0_format')}"
+    key_l0 = f"{target_config.get('l0_layer')}/{schema}/{table}/{process_date}/{table}.{target_config.get('l0_format')}"
     key_quarantine = f"{config.get('quarantine_layer')}/{schema}/{table}/{process_date}/{table}.{config.get('rcv_format')}"
     source_file = f"s3://{bucket}/{key_rcv}"
 
@@ -20,6 +21,7 @@ def rcv_to_l0(schema, table, bucket, process_date):
         "key_source": key_rcv,
         "key_quarantine": key_quarantine,
         "config": config,
+        "target_config": target_config,
         "source_file": source_file,
         "df": None,
     }
@@ -39,13 +41,15 @@ def rcv_to_l0(schema, table, bucket, process_date):
 def l0_to_l1(schema, table, bucket, process_date):
     logging.info(f"Start processing table {table} from l0/ to l1/")
     config = s3_helper.load_config(bucket=bucket, layer="l0", table=table)
+    target_config = s3_helper.load_config(bucket=bucket, layer="l1", table=table)
     key_l0 = f"{config.get('l0_layer')}/{schema}/{table}/{process_date}/{table}.{config.get('l0_format')}"
-    key_l1 = f"{config.get('l1_layer')}/{schema}/{table}/{process_date}/{table}.{config.get('l1_format')}"
+    key_l1 = f"{target_config.get('l1_layer')}/{schema}/{table}/{process_date}/{table}.{target_config.get('l1_format')}"
     key_audit = f"{config.get('audit_layer')}/{schema}/{table}/{process_date}/{table}.{config.get('audit_format')}"
 
     context = {
         "df": None,
         "config": config,
+        "target_config": target_config,
     }
 
     context["df"] = utils.read_file(bucket, key_l0, format=config["l0_format"])
@@ -66,7 +70,7 @@ def l0_to_l1(schema, table, bucket, process_date):
     utils.write_file(valid_records, bucket, key_l1, format=config["l1_format"])
     if not error_records.empty:
         utils.write_file(
-            valid_records, bucket, key_audit, format=config["audit_format"]
+            error_records, bucket, key_audit, format=config["audit_format"]
         )
 
     logging.info(f"\nCompleted process from l0 to l1, table {table}")

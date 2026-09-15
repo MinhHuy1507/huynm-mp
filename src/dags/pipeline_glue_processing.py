@@ -1,16 +1,14 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.amazon.aws.operators.glue import GlueJobOperator
 from airflow.models.param import Param
 
 from scripts.utils.track_job import (
     init_tracking_record,
-    python_job_success_callback,
-    python_job_failure_callback,
+    glue_job_failure_callback,
+    glue_job_success_callback,
 )
-
-from scripts.pandas_etl.process_layers import process
-from scripts.pandas_etl.load_database import l1_to_database
 
 default_args = {
     "owner": "airflow",
@@ -21,7 +19,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="pipeline_pandas",
+    dag_id="pipeline_glue_processing",
     default_args=default_args,
     catchup=False,
     start_date=datetime(2026, 1, 1),
@@ -91,50 +89,38 @@ with DAG(
         },
     )
 
-    processing_rcv_l0_l1 = PythonOperator(
-        task_id="processing_rcv_l0_l1",
-        python_callable=process,
-        op_kwargs={
-            "layer": "rcv_to_l0",
-            "schema": schema_name,
-            "table": table_name,
-            "bucket": bucket_name,
-            "process_date": process_date,
+    processing_rcv_to_l0 = GlueJobOperator(
+        task_id="processing_rcv_to_l0",
+        job_name="huynm43-mp-glue",
+        script_args={
+            "--layer": "rcv_to_l0",
+            "--bucket": bucket_name,
+            "--table": table_name,
+            "--process_date": process_date,
+            "--schema": schema_name,
         },
-        on_failure_callback=python_job_failure_callback,
-        on_success_callback=python_job_success_callback,
+        aws_conn_id="aws_default",
+        region_name=region_name,
+        wait_for_completion=True,
+        on_failure_callback=glue_job_failure_callback,
+        on_success_callback=glue_job_success_callback,
     )
 
-    processing_l0_to_l1 = PythonOperator(
+    processing_l0_to_l1 = GlueJobOperator(
         task_id="processing_l0_to_l1",
-        python_callable=process,
-        op_kwargs={
-            "layer": "l0_to_l1",
-            "schema": schema_name,
-            "table": table_name,
-            "bucket": bucket_name,
-            "process_date": process_date,
+        job_name="huynm43-mp-glue",
+        script_args={
+            "--layer": "l0_to_l1",
+            "--bucket": bucket_name,
+            "--table": table_name,
+            "--process_date": process_date,
+            "--schema": schema_name,
         },
-        on_failure_callback=python_job_failure_callback,
-        on_success_callback=python_job_success_callback,
+        aws_conn_id="aws_default",
+        region_name=region_name,
+        wait_for_completion=True,
+        on_failure_callback=glue_job_failure_callback,
+        on_success_callback=glue_job_success_callback,
     )
 
-    load_l1_to_database = PythonOperator(
-        task_id="load_l1_to_database",
-        python_callable=l1_to_database,
-        op_kwargs={
-            "schema": schema_name,
-            "table": table_name,
-            "bucket": bucket_name,
-            "process_date": process_date,
-        },
-        on_failure_callback=python_job_failure_callback,
-        on_success_callback=python_job_success_callback,
-    )
-
-    (
-        init_dynamo_tracking
-        >> processing_rcv_l0_l1
-        >> processing_l0_to_l1
-        >> load_l1_to_database
-    )
+    init_dynamo_tracking >> processing_rcv_to_l0 >> processing_l0_to_l1

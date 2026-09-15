@@ -29,9 +29,14 @@ logs/
 lambda/
 artifacts/
 
-*pem
+*.pem
 note*
 *secret*
 *.bat
 *.sh
 *.zip
+
+glue_libs/
+*.whl
+
+!src/glue/deploy.bat
