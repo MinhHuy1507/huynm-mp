@@ -7,17 +7,20 @@ l1_format: parquet
 columns:
   - name: order_id
     type: string
-    db_type: VARCHAR(50)
+    db_type: VARCHAR
+    max_length: 20
     primary_key: true
 
   - name: customer_id
     type: string
-    db_type: VARCHAR(50)
+    db_type: VARCHAR
+    max_length: 20
     not_null: true
 
   - name: product_id
     type: string
-    db_type: VARCHAR(50)
+    db_type: VARCHAR
+    max_length: 20
     not_null: true
 
   - name: quantity
@@ -27,7 +30,9 @@ columns:
 
   - name: price
     type: decimal
-    db_type: NUMERIC(15,2)
+    db_type: NUMERIC
+    precision: 15
+    scale: 2
     not_null: true
 
   - name: order_date
@@ -42,7 +47,8 @@ columns:
 
   - name: source_file
     type: string
-    db_type: VARCHAR(255)
+    db_type: VARCHAR
+    max_length: 255
     not_null: true
 
 load_database:

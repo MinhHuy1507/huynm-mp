@@ -36,14 +36,30 @@ def create_table(config):
     logging.info(f"Creating table {schema}.{table}")
 
     for col in config["columns"]:
-        parts = [col["name"], col["db_type"]]
+        db_type = col["db_type"].upper()
+
+        if db_type == "VARCHAR" and "max_length" in col:
+            db_type = f"VARCHAR({col['max_length']})"
+        elif db_type in ["NUMERIC", "DECIMAL"]:
+            if "precision" in col and "scale" in col:
+                db_type = f"{db_type}({col['precision']},{col['scale']})"
+            elif "precision" in col:
+                db_type = f"{db_type}({col['precision']})"
+
+        parts = [col["name"], db_type]
+        meta_keys = ["name", "type", "db_type", "max_length", "precision", "scale"]
+
         for key, value in col.items():
+            if key in meta_keys:
+                continue
+
             expr = mapping_constraint(key, value, col)
             if expr:
                 parts.append(expr)
+
         column_defs.append(" ".join(parts))
 
-    columns_sql = ",\n".join(column_defs)
+    columns_sql = ",\n        ".join(column_defs)
     sql = f"""
     CREATE SCHEMA IF NOT EXISTS {schema};
 
