@@ -1,7 +1,7 @@
-# Mock Project
+# **Mock Project**
 Xây dựng batch data pipeline xử lý dữ liệu bán hàng theo ngày.
 
-# Yêu cầu
+## Yêu cầu
 - Chuẩn bị file customer.csv gồm:
 ```
 id,name,birthday,address,kpi
@@ -16,7 +16,7 @@ id,first_name,last_name,birthday,address,address_province,kpi
 - kpi phải là kiểu decimal.
 - Tách name thành first_name, last_name.
 - Tách tỉnh/thành phố từ address.
-# Data layer
+## Data layer
 ```
 RCV/{schema_name}/{table_name}/yyyy/mm/dd/{table_name}.csv
 L0/{schema_name}/{table_name}/yyyy/mm/dd/{table_name}.csv
@@ -29,7 +29,7 @@ L1/{schema_name}/{table_name}/yyyy/mm/dd/{table_name}.parquet
 - Product
 - Transaction
 
-# Database load
+## Database load
 Phải triển khai đủ ba cơ chế:
 
 - Upsert
@@ -38,7 +38,7 @@ Phải triển khai đủ ba cơ chế:
 
 Tự lựa chọn cơ chế phù hợp cho từng bảng.
 
-# Technical requirements
+## Technical requirements
 - Sử dụng Python.
 - Sử dụng Apache Airflow để orchestration.
 - Có validation và xử lý dữ liệu lỗi.
@@ -48,7 +48,7 @@ Tự lựa chọn cơ chế phù hợp cho từng bảng.
 - Không hard-code path, schema, table, column, data type, load strategy hoặc database connection.
 - Các thông tin cấu hình phải được quản lý bằng YAML, JSON, environment variable, Airflow Variable hoặc Airflow Connection.
 
-# Deliverables
+## Deliverables
 - Source code
 - Airflow DAG
 - Config

@@ -132,7 +132,6 @@
 ## 2. validate_unique
 ### Purpose
 - Kiểm tra một/nhiều cột có chứa giá trị duplicate không.
-- Hàm chỉ dùng cho những cột không phải primary key.
 - Hàm tạo ra một validation condition dùng để xác định bản ghi nào thỏa mãn quy tắc unique.
 - Hàm sẽ bỏ qua null
 
@@ -164,7 +163,7 @@
 | 3    | A         | FALSE              |
 | 3    | Huy       | TRUE               |
 
-- Giải thích: các record có cặp (id, name) trùng dũ liệu sẽ được đánh dấu FALSE, riêng NULL sẽ được bỏ qua.
+- Giải thích: các record có cặp (id, name) trùng dữ liệu sẽ được đánh dấu FALSE; riêng NULL sẽ được bỏ qua.
 
 ## 3. validate_range
 ### Purpose
@@ -204,42 +203,7 @@
 
 - Giải thích: validate range cho cột `kpi`, quy định trong khoảng giá trị [0, 100], ngoài khoảng là FALSE, trong khoảng hoặc chứa giá trị NULL thì TRUE
 
-## 4. validate_format
-### Purpose
-- Kiểm tra một cột có chứa giá trị đúng với định dạng được định nghĩa hay không.
-- Hàm tạo ra một validation condition dùng để xác định bản ghi nào thỏa mãn quy tắc.
-- Hàm sẽ bỏ qua null
-
-### Input
-- Dữ liệu đang xử lý.
-- Cột cần được validate.
-- Format quy định.
-
-### Output
-- Hàm trả về một validation condition đại diện cho kết quả đánh giá của từng record.
-- Validation condition phải trả về:
-    - TRUE  -> Record satisfies rule
-    - FALSE -> Record violates rule
-
-### Scenarios
-| Scenario                       | Expected Result                                  |
-| ------------------------------ | ------------------------------------------------ |
-| Record chứa giá trị hợp lệ        | Validation result = TRUE                         |
-| Record chứa giá trị không hợp lệ                 | Validation result = FALSE                        |
-| Dữ liệu có nhiều records       | Kết quả được đánh giá cho từng record            |
-
-
-> Example: format = "yyyy-mm-dd"
-
-| birthday   | validation_result  |
-| ---------- | ------------------ |
-| 2026/09/09 | FALSE              |
-| 2026-09-09 | TRUE               |
-| NULL       | TRUE               |
-
-- Giải thích: validate format cho cột `birthday`, record có giá trị giống format quy định hoặc NULL thì TRUE, khác format thì FALSE
-
-## 5. validate_datatype
+## 4. validate_datatype
 ### Purpose
 - Kiểm tra một cột có chứa giá trị đúng với kiểu dữ liệu đã được định nghĩa hay không.
 - Hàm tạo ra một validation condition dùng để xác định bản ghi nào thỏa mãn quy tắc.
@@ -275,52 +239,7 @@
 
 - Giải thích: validate datatype cho cột `kpi`, record có kiểu dữ liệu là float hoặc NULL thì TRUE, còn lại FALSE.
 
-## 6. validate_duplicate
-### Purpose
-- Kiểm tra dữ liệu xem có bị duplicate hay không.
-- Hàm này lọc duplicate dựa trên cột primary key nếu có define, còn không thì lọc dựa trên toàn bộ cột
-- Hàm tạo ra một validation condition dùng để xác định bản ghi nào thỏa mãn quy tắc.
-
-### Input 
-- Dữ liệu đang xử lý.
-- Cột primary key (optional), nếu không có thì xử lý trên toàn bộ cột
-
-### Output
-- Hàm trả về một validation condition đại diện cho kết quả đánh giá của từng record.
-- Validation condition phải trả về:
-    - TRUE  -> Record satisfies rule
-    - FALSE -> Record violates rule
-
-### Scenarios
-| Scenario                           | Expected Result                                        |
-| ---------------------------------- | ------------------------------------------------------ |
-| Record không duplicate             | Validation result = `TRUE`                             |
-| Record duplicate xuất hiện lần đầu | Validation result = `TRUE`                            |
-| Record duplicate xuất hiện ở các lần sau | Validation result = `FALSE`                            |
-| Dữ liệu có nhiều records           | Kết quả được đánh giá riêng cho từng record            |
-| Có từ 2 records trở lên giống nhau | Tất cả records trong nhóm duplicate đều trả về `FALSE` |
-
-
-
-> Example: 
-
-| id | name | age | validation_result |
-| -: | ---- | --: | :----------------: |
-|  1 | Huy  | 21 |       `TRUE`      |
-|  2 | An   |  30 |       `TRUE`       |
-|  1 | Huy  | 21 |       `FALSE`      |
-|  3 | Minh |  28 |       `TRUE`       |
-|  4 | Lan  |  22 |       `TRUE`      |
-|  4 | Lan  |  22 |       `FALSE`      |
-|  4 | Lan  |  22 |       `FALSE`      |
-
-- Giải thích: 
-  - Record (2, An, 30) chỉ xuất hiện một lần nên trả về TRUE.
-  - Record (3, Minh, 28) chỉ xuất hiện một lần nên trả về TRUE.
-  - Hai records (1, Huy,21) có dữ liệu giống nhau hoàn toàn. Record xuất hiện đầu tiên sẽ trả về TRUE, các lần xuất hiện sau là FALSE.
-  - Ba records (4, Lan, 22) có dữ liệu giống nhau hoàn toàn. Record xuất hiện đầu tiên sẽ trả về TRUE, các lần xuất hiện sau là FALSE.
-
-## 6. split_customers_name
+## 5. split_customers_name
 ### Purpose
 - Chuẩn hóa cột họ tên khách hàng (name) thành 2 cột riêng biệt là first_name và last_name:
     - first_name: từ cuối cùng trong tên đầy đủ
@@ -359,7 +278,7 @@ Example
 |Ngo Minh (lots of space) Huy| Huy | Ngo Minh |
 
 
-## 7. split_customers_address
+## 6. split_customers_address
 ### Purpose
 - Chuẩn hóa cột address của table customers thành 2 cột riêng biệt là address và address_province:
     - address: address được chuẩn hóa (xóa space, xóa ký tự thừa ở đầu và cuối chuỗi)
@@ -409,7 +328,7 @@ Example
 | 123 Nguyen Ai Quoc, , Ho Chi Minh           | 123 Nguyen Ai Quoc, Ho Chi Minh             | Ho Chi Minh   |
 
 
-## 8. rename_columns
+## 7. rename_columns
 ### Purpose
 - Chuẩn hóa tên cột trong dữ liệu theo quy tắc được định nghĩa.
 
@@ -448,7 +367,7 @@ Example
 | ------------ | -------------- |
 | 1            | Huy            |
 
-## 9. filter_columns
+## 8. filter_columns
 ### Purpose
 - Lựa chọn các cột cần thiết từ dữ liệu.
     - Loại bỏ cột không sử dụng
@@ -472,6 +391,142 @@ Example
 | Giá trị dữ liệu không thay đổi        | Dữ liệu trong các cột được giữ lại không bị thay đổi |
 | Thứ tự cột trong output được cấu hình | Output column order phải giống cấu hình output         |
 | Các cột được filter không có trong dữ liệu | Message `Columns not found: (columns filter)`   |
+
+
+## 9. cast_datatype
+
+### Mục đích
+- Chuyển đổi kiểu dữ liệu của một cột sang kiểu dữ liệu đích được định nghĩa trong cấu hình bảng.
+- Chuẩn hóa kiểu dữ liệu trước khi nạp dữ liệu vào các layer hoặc cơ sở dữ liệu phía sau.
+- Hỗ trợ định nghĩa định dạng ngày tháng (date format) cho các cột kiểu ngày.
+
+### Input
+- Dataset cần xử lý.
+- Cột cần chuyển đổi kiểu dữ liệu.
+- Cấu hình cột bao gồm:
+  - Kiểu dữ liệu (`type`)
+  - Định dạng ngày tháng tùy chọn (`format`)
+
+### Output
+- Trả về cột đã được chuyển đổi sang kiểu dữ liệu đích.
+- Nếu kiểu dữ liệu không được hỗ trợ, trả về thông báo lỗi.
+
+### Các kiểu dữ liệu được hỗ trợ
+
+| Kiểu cấu hình | Kiểu dữ liệu đầu ra |
+|--------------|--------------------|
+| string | String |
+| int | Integer |
+| integer | Integer |
+| decimal | Decimal |
+| double | Double |
+| date | Date |
+| datetime | Datetime |
+| timestamp | Timestamp |
+
+### Các trường hợp xử lý
+
+| Tình huống | Kết quả mong đợi |
+|-----------|------------------|
+| Kiểu dữ liệu của cột nằm trong danh sách được hỗ trợ | Giá trị được chuyển đổi sang đúng kiểu dữ liệu tương ứng |
+| Giá trị không thể chuyển đổi sang kiểu dữ liệu đích | Giá trị đầu ra được gán thành NULL |
+| Dữ liệu đầu vào chứa giá trị NULL | Giá trị NULL được giữ nguyên |
+| Dataset chứa N bản ghi | Dataset đầu ra vẫn chứa N bản ghi |
+| Kiểu dữ liệu không được hỗ trợ | Thông báo `Unsupported type: {type} in column {column}` |
+
+### Ví dụ
+
+#### Ví dụ 1: Chuyển đổi sang Integer
+
+Input:
+
+| id |
+|----|
+| 1 |
+| 2 |
+| abc |
+| NULL |
+
+Configuration:
+
+```yaml
+type: int
+```
+
+Output:
+
+| id |
+|----|
+| 1 |
+| 2 |
+| NULL |
+| NULL |
+
+#### Ví dụ 2: Chuyển đổi sang Date với định dạng được chỉ định
+
+Input:
+
+| birthday |
+|----------|
+| 2026-09-09 |
+| 2026-01-15 |
+| invalid |
+| NULL |
+
+Configuration:
+
+```yaml
+type: date
+format: YYYY-MM-DD
+```
+
+Output:
+
+| birthday |
+|----------|
+| 2026-09-09 |
+| 2026-01-15 |
+| NULL |
+| NULL |
+
+#### Ví dụ 3: Chuyển đổi sang Datetime
+
+Input:
+
+| created_at |
+|------------|
+| 2026-09-09 10:15:00 |
+| 2026-09-10 08:30:00 |
+| invalid |
+
+Configuration:
+
+```yaml
+type: datetime
+```
+
+Output:
+
+| created_at |
+|------------|
+| 2026-09-09 10:15:00 |
+| 2026-09-10 08:30:00 |
+| NULL |
+
+#### Ví dụ 4: Kiểu dữ liệu không được hỗ trợ
+
+Configuration:
+
+```yaml
+type: binary
+```
+
+Output:
+
+```text
+Unsupported type: binary in column customer_id
+```
+
 
 # Các hàm từ l1/ load database rds postgres
 ## 1. create_table
